@@ -1,27 +1,39 @@
 const canvas = document.getElementById("gameCanvas");
 const ctx = canvas.getContext("2d");
 
-// Ảnh
+// 🖼️ Hình ảnh
 const bg = new Image(); bg.src = "assets/bg.png";
 const birdImg = new Image(); birdImg.src = "assets/bird.png";
 const groundImg = new Image(); groundImg.src = "assets/ground.png";
 const pipeImg = new Image(); pipeImg.src = "assets/pipe.png";
 
-// Biến game
+// 🎮 Biến game
 let birdX = 50, birdY = 200, gravity = 0.4, velocity = 0, jump = -7;
 let score = 0, gameOver = false, started = false;
 let pipes = [{ x: 400, y: -150 }];
 
-// Click để bắt đầu hoặc nhảy
-canvas.addEventListener("mousedown", () => {
+// 📱 Canvas tự co kích thước theo màn hình
+function resizeCanvas() {
+  const scale = Math.min(window.innerWidth / 400, window.innerHeight / 600);
+  canvas.style.width = 400 * scale + "px";
+  canvas.style.height = 600 * scale + "px";
+}
+window.addEventListener("resize", resizeCanvas);
+resizeCanvas();
+
+// 🖱️ + 📱 Click hoặc chạm để bắt đầu / nhảy
+function flap() {
   if (!started) {
-    started = true; // bắt đầu game khi click lần đầu
+    started = true;
   } else if (!gameOver) {
     velocity = jump;
   }
-});
+}
 
-// Reset game
+canvas.addEventListener("mousedown", flap);
+canvas.addEventListener("touchstart", flap, { passive: true });
+
+// 🔄 Reset game
 function resetGame() {
   birdX = 50;
   birdY = 200;
@@ -33,10 +45,10 @@ function resetGame() {
   draw();
 }
 
-// Gửi điểm đến backend
+// 🧩 Gửi điểm đến backend
 async function sendScore(name, score) {
   try {
-    const res = await fetch("https://flappy-bf49.onrender.com/submi", {
+    const res = await fetch("https://flappy-bf49.onrender.com/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ name, score }),
@@ -47,7 +59,7 @@ async function sendScore(name, score) {
   }
 }
 
-// Hiện bảng Game Over
+// ☠️ Hiện bảng Game Over
 function showGameOver() {
   ctx.fillStyle = "rgba(0,0,0,0.6)";
   ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -63,14 +75,10 @@ function showGameOver() {
   }, 400);
 }
 
-// Nút chơi lại
-document.getElementById("restartBtn").addEventListener("click", resetGame);
-
-// Hiện bảng xếp hạng
+// 🏆 Bảng xếp hạng
 document.getElementById("leaderboardBtn").addEventListener("click", async () => {
   showLeaderboard();
 });
-
 document.getElementById("closeLeaderboard").addEventListener("click", () => {
   document.getElementById("leaderboard").classList.add("hidden");
 });
@@ -100,31 +108,27 @@ const closeSettings = document.getElementById("closeSettings");
 
 settingsBtn.addEventListener("click", () => settingsMenu.classList.remove("hidden"));
 closeSettings.addEventListener("click", () => settingsMenu.classList.add("hidden"));
-
-// Các nút trong menu
 document.getElementById("homeBtn").addEventListener("click", () => window.location.href = "index.html");
 document.getElementById("backBtn").addEventListener("click", () => history.back());
 document.getElementById("resetBtn").addEventListener("click", () => { resetGame(); settingsMenu.classList.add("hidden"); });
 document.getElementById("menuLeaderboardBtn").addEventListener("click", () => { showLeaderboard(); settingsMenu.classList.add("hidden"); });
 
-// Game loop
+// 🔁 Game loop
 function draw() {
   ctx.drawImage(bg, 0, 0, canvas.width, canvas.height);
 
   if (!started) {
-    // Chim lượn nhẹ chờ người chơi bấm
     birdY = 200 + Math.sin(Date.now() / 300) * 10;
     ctx.drawImage(birdImg, birdX, birdY, 50, 35);
     ctx.font = "24px Arial";
     ctx.fillStyle = "#fff";
-    ctx.fillText("Bấm chuột để bắt đầu!", 80, canvas.height / 2);
+    ctx.fillText("Chạm màn hình để bắt đầu!", 50, canvas.height / 2);
     requestAnimationFrame(draw);
     return;
   }
 
   if (gameOver) return;
 
-  // Ống
   for (let i = 0; i < pipes.length; i++) {
     let p = pipes[i];
     ctx.drawImage(pipeImg, p.x, p.y, 60, 300);
